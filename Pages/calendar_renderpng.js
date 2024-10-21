@@ -1,46 +1,53 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import html2canvas from 'html2canvas';
 
 export default function CalendarRenderPNG() {
-  const canvasRef = useRef(null);
-
   useEffect(() => {
-    const fetchAndRenderCalendar = async () => {
+    const generateImage = async () => {
       try {
-        // Fetch the external HTML content from the calendar page
-        const response = await fetch('https://secure.einkcal.com/calendar_screen1.html');
-        const calendarHTML = await response.text();
+        // Load the external HTML page (calendar_screen1.html)
+        const response = await fetch('https://secure.einkcal.com/calendar_screen1.html', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'text/html',
+          },
+        });
 
-        // Create a container to inject the HTML for rendering
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = calendarHTML;
-        document.body.appendChild(tempDiv);
+        const htmlContent = await response.text();
+        
+        // Create a hidden iframe to load the external HTML
+        const iframe = document.createElement('iframe');
+        iframe.style.width = '960px';
+        iframe.style.height = '680px';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        iframe.contentWindow.document.open();
+        iframe.contentWindow.document.write(htmlContent);
+        iframe.contentWindow.document.close();
 
-        // Render the HTML to a canvas using html2canvas
-        const element = tempDiv; // You can point to a specific div within the fetched HTML
-        const canvas = await html2canvas(element);
-        const imageData = canvas.toDataURL('image/png');
+        // Wait for the iframe content to load
+        iframe.onload = async () => {
+          // Capture the content as PNG using html2canvas
+          const canvas = await html2canvas(iframe.contentWindow.document.body, {
+            width: 960,
+            height: 680,
+          });
 
-        // Remove the temporary div from the DOM
-        document.body.removeChild(tempDiv);
+          // Convert canvas to a data URL (PNG format)
+          const imageData = canvas.toDataURL('image/png');
 
-        // Display the generated image in the canvas
-        const canvasElement = canvasRef.current;
-        const ctx = canvasElement.getContext('2d');
-        const img = new Image();
-        img.src = imageData;
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0);
+          // Upload the PNG image to SiteGround via PHP script
+          await uploadImageToServer(imageData);
+          
+          // Remove the iframe after capture
+          document.body.removeChild(iframe);
         };
-
-        // Upload the image to the server as a PNG file
-        await uploadImageToServer(imageData);
       } catch (error) {
-        console.error('Error fetching and rendering the calendar:', error);
+        console.error('Error generating the image:', error);
       }
     };
 
-    fetchAndRenderCalendar();
+    generateImage();
   }, []);
 
   const uploadImageToServer = async (imageData) => {
@@ -52,18 +59,18 @@ export default function CalendarRenderPNG() {
           'Content-Type': 'application/json',
         },
       });
+
       const data = await response.json();
-      console.log('Image uploaded:', data);
+      console.log('Image uploaded successfully:', data);
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Error uploading image to the server:', error);
     }
   };
 
   return (
     <div>
-      <h1>Calendar</h1>
-      {/* Canvas to display the rendered PNG image */}
-      <canvas id="canvas" width="960" height="680" ref={canvasRef}></canvas>
+      <h1>Generating and Uploading Calendar Image...</h1>
+      <p>This process will convert the calendar HTML to an image and upload it.</p>
     </div>
   );
 }
