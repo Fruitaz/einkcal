@@ -1,6 +1,6 @@
 {
   "name": "einkcal",
-  "version": "1.0.0",  // Ensure the version is in the correct format
+  "version": "1.0.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
