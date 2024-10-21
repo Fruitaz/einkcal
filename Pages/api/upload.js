@@ -1,5 +1,3 @@
-// pages/api/upload.js
-
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { image } = req.body;
@@ -9,12 +7,20 @@ export default async function handler(req, res) {
     }
 
     try {
-      // Send the image to the SiteGround PHP script
-      const response = await fetch('https://your-siteground-domain.com/upload.php', {
+      // Access username and password from environment variables
+      const username = process.env.NEXT_PUBLIC_SITEGROUND_USERNAME;
+      const password = process.env.NEXT_PUBLIC_SITEGROUND_PASSWORD;
+
+      // Encode credentials for Basic Auth
+      const credentials = btoa(`${username}:${password}`);
+
+      // Forward the image to SiteGround PHP script for saving as BMP
+      const response = await fetch('https://secure.einkcal.com/upload.php', {
         method: 'POST',
         body: JSON.stringify({ image }),
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Basic ${credentials}`,  // Add Basic Auth header
         },
       });
 
