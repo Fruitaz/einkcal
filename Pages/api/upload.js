@@ -7,12 +7,12 @@ export default async function handler(req, res) {
     }
 
     try {
-      // Access username and password from environment variables
+      // Get credentials from environment variables
       const username = process.env.NEXT_PUBLIC_SITEGROUND_USERNAME;
       const password = process.env.NEXT_PUBLIC_SITEGROUND_PASSWORD;
 
       // Encode credentials for Basic Auth
-      const credentials = btoa(`${username}:${password}`);
+      const credentials = Buffer.from(`${username}:${password}`).toString('base64');
 
       // Forward the image to SiteGround PHP script for saving as BMP
       const response = await fetch('https://secure.einkcal.com/upload.php', {
