@@ -4,11 +4,17 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "@sparticuz/chromium": "^126.0.0",  // Matches with Chromium 126 (Serverless compatible)
-    "puppeteer-core": "^23.6.0",  // Latest version
-    "axios": "^1.5.0",  // Latest stable version
-    "next": "^13.5.2",  // Updated Next.js version for better performance and features
-    "react": "^18.2.0",  // React 18 for the latest features
-    "react-dom": "^18.2.0"  // React DOM corresponding to React 18
+    "@sparticuz/chromium": "^126.0.0",
+    "puppeteer-core": "^23.6.0",
+    "axios": "^1.5.0",
+    "next": "^13.5.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   }
 }
