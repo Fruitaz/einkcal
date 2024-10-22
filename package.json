@@ -2,7 +2,8 @@
   "name": "einkcal-screenshot-app",
   "version": "1.0.0",
   "scripts": {
-    "start": "node api/screenshot.js"
+    "start": "node api/screenshot.js",
+    "postinstall": "puppeteer install"
   },
   "dependencies": {
     "puppeteer": "^21.0.0",
