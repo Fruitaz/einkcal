@@ -1,13 +1,17 @@
 const puppeteer = require('puppeteer');
+const chromium = require('@sparticuz/chromium');
 const FTPClient = require('ftp');
 const fs = require('fs');
 
 module.exports = async (req, res) => {
   try {
-    // Launch Puppeteer and navigate to the webpage
+    // Launch Puppeteer with @sparticuz/chromium
     const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: chromium.args,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless
     });
+    
     const page = await browser.newPage();
 
     // Set up Basic Authentication
@@ -17,9 +21,7 @@ module.exports = async (req, res) => {
     });
 
     // Navigate to the page
-    await page.goto('https://secure.einkcal.com/calendar_screen1.html', {
-      waitUntil: 'networkidle2',
-    });
+    await page.goto('https://secure.einkcal.com/calendar_screen1.html', { waitUntil: 'networkidle2' });
 
     // Take a screenshot
     const screenshotPath = '/tmp/screenshot.png';
@@ -29,10 +31,9 @@ module.exports = async (req, res) => {
     // Set up FTP connection
     const ftp = new FTPClient();
     ftp.on('ready', function () {
-      // Upload screenshot to SiteGround server
       ftp.put(screenshotPath, '/public_html/screenshots/screenshot.png', function (err) {
         if (err) throw err;
-        ftp.end();  // Close the connection after uploading
+        ftp.end();
         res.status(200).send('Screenshot uploaded successfully!');
       });
     });
@@ -42,8 +43,9 @@ module.exports = async (req, res) => {
       host: 'ftp.einkcal.com',
       user: 'vercel@einkcal.com',
       password: 'gM3x11E141@1',
-      port: 21,
+      port: 21
     });
+
   } catch (err) {
     console.error(err);
     res.status(500).send('Error occurred: ' + err.message);
