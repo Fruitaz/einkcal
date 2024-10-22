@@ -1,17 +1,11 @@
-const puppeteer = require('puppeteer-core');
-const chromium = require('@sparticuz/chromium');
+const { chromium } = require('playwright');
 const FTPClient = require('ftp');
 const fs = require('fs');
 
 module.exports = async (req, res) => {
   try {
-    // Launch Puppeteer using the lightweight Chromium from @sparticuz/chromium
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,  // Run Chromium in headless mode
-    });
-
+    // Launch Playwright Chromium
+    const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
 
     // Set up Basic Authentication
@@ -20,28 +14,26 @@ module.exports = async (req, res) => {
       password: 'shyleemillyash'
     });
 
-    // Navigate to the page and wait until the network is idle
+    // Navigate to the page
     await page.goto('https://secure.einkcal.com/calendar_screen1.html', {
-      waitUntil: 'networkidle2',
+      waitUntil: 'networkidle',
     });
 
-    // Take a screenshot and save it in the /tmp directory
+    // Take a screenshot
     const screenshotPath = '/tmp/screenshot.png';
     await page.screenshot({ path: screenshotPath, width: 980, height: 640 });
-    await browser.close();  // Close the browser after taking the screenshot
+    await browser.close();
 
-    // Set up FTP connection
+    // Set up FTP connection and upload the screenshot
     const ftp = new FTPClient();
     ftp.on('ready', function () {
-      // Upload the screenshot to your server
       ftp.put(screenshotPath, '/public_html/screenshots/screenshot.png', function (err) {
         if (err) throw err;
-        ftp.end();  // Close the FTP connection
+        ftp.end();
         res.status(200).send('Screenshot uploaded successfully!');
       });
     });
 
-    // Connect to the FTP server using the provided credentials
     ftp.connect({
       host: 'ftp.einkcal.com',
       user: 'vercel@einkcal.com',
