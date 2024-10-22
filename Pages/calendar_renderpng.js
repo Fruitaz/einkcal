@@ -1,76 +1,65 @@
-import React, { useEffect } from 'react';
-import html2canvas from 'html2canvas';
+// pages/calendar_renderpng.js
 
-export default function CalendarRenderPNG() {
+import { useEffect } from 'react';
+import html2canvas from 'html2canvas';
+import fetch from 'node-fetch';
+
+const CalendarRenderPNG = () => {
   useEffect(() => {
-    const generateImage = async () => {
+    const renderAndUpload = async () => {
       try {
-        // Load the external HTML page (calendar_screen1.html)
+        // Fetch the protected HTML page
         const response = await fetch('https://secure.einkcal.com/calendar_screen1.html', {
-          method: 'GET',
           headers: {
-            'Content-Type': 'text/html',
-          },
+            'Authorization': 'Basic ' + Buffer.from(`${process.env.CALENDAR_USERNAME}:${process.env.CALENDAR_PASSWORD}`).toString('base64')
+          }
         });
 
-        const htmlContent = await response.text();
-        
-        // Create a hidden iframe to load the external HTML
-        const iframe = document.createElement('iframe');
-        iframe.style.width = '960px';
-        iframe.style.height = '680px';
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-        iframe.contentWindow.document.open();
-        iframe.contentWindow.document.write(htmlContent);
-        iframe.contentWindow.document.close();
+        if (!response.ok) {
+          throw new Error('Failed to fetch the calendar HTML page.');
+        }
 
-        // Wait for the iframe content to load
-        iframe.onload = async () => {
-          // Capture the content as PNG using html2canvas
-          const canvas = await html2canvas(iframe.contentWindow.document.body, {
-            width: 960,
-            height: 680,
-          });
+        const html = await response.text();
 
-          // Convert canvas to a data URL (PNG format)
-          const imageData = canvas.toDataURL('image/png');
+        // Create a DOM element to hold the HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const element = doc.body;
 
-          // Upload the PNG image to SiteGround via PHP script
-          await uploadImageToServer(imageData);
-          
-          // Remove the iframe after capture
-          document.body.removeChild(iframe);
-        };
+        // Render the HTML to PNG using html2canvas
+        const canvas = await html2canvas(element, { width: 960, height: 680 });
+        const pngDataUrl = canvas.toDataURL('image/png');
+
+        // Convert Data URL to Blob
+        const blob = await fetch(pngDataUrl).then(res => res.blob());
+
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('image', blob, 'calendar.png');
+
+        // Upload the PNG to SiteGround via upload.php
+        const uploadResponse = await fetch(process.env.UPLOAD_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Basic ' + Buffer.from(`${process.env.UPLOAD_USERNAME}:${process.env.UPLOAD_PASSWORD}`).toString('base64')
+          },
+          body: formData
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload PNG to SiteGround.');
+        }
+
+        console.log('PNG successfully uploaded to SiteGround.');
       } catch (error) {
-        console.error('Error generating the image:', error);
+        console.error('Error in renderAndUpload:', error);
       }
     };
 
-    generateImage();
+    renderAndUpload();
   }, []);
 
-  const uploadImageToServer = async (imageData) => {
-    try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: JSON.stringify({ image: imageData }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+  return <div>Rendering Calendar...</div>;
+};
 
-      const data = await response.json();
-      console.log('Image uploaded successfully:', data);
-    } catch (error) {
-      console.error('Error uploading image to the server:', error);
-    }
-  };
-
-  return (
-    <div>
-      <h1>Generating and Uploading Calendar Image...</h1>
-      <p>This process will convert the calendar HTML to an image and upload it.</p>
-    </div>
-  );
-}
+export default CalendarRenderPNG;
