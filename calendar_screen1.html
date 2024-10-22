@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Skeuomorphic Brutalist Calendar with Events</title>
+    <style>
+        /* General Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            background-color: #fff;
+            color: #000;
+            overflow: hidden;
+            font-family: Verdana, sans-serif;
+        }
+
+        /* Lower Section (Adjusted to Full Height) */
+        .lower-section {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Calendar Container */
+        .calendar-container {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            height: 100%;
+        }
+
+        /* Calendar and Today Panel */
+        .calendar-content {
+            display: flex;
+            flex-grow: 1;
+            height: 100%;
+        }
+
+        .calendar-grid {
+            flex: 3;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: auto repeat(6, 1fr);
+            gap: 0;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .today-panel {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            position: relative;
+            background-color: #fff;
+            margin-left: 10px;
+            border: 2px solid #000;
+            border-radius: 10px;
+            box-shadow: 3px 3px 0px 0px #000;
+        }
+
+        /* Day Names */
+        .day-name {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 13px;
+            background-color: #fff;
+            border-bottom: 1px solid #000;
+            height: auto;
+        }
+
+        /* Day Cells */
+        .day {
+            position: relative;
+            padding: 2px;
+            font-size: 13px;
+            border: 1px solid #000;
+            border-left: none;
+            border-top: none;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            background-color: #fff;
+            transition: background-color 0.3s;
+            overflow: hidden;
+        }
+
+        .day:hover {
+            background-color: #f0f0f0;
+        }
+
+        .day .day-number {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 13px;
+            font-weight: bold;
+            font-family: Verdana, sans-serif;
+        }
+
+        /* Today's Date Circle */
+        .today .day-number {
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 6px;
+            font-size: 14px;
+        }
+
+        /* Events */
+        .event {
+            margin: 2px 0;
+            padding: 2px;
+            border: 1px solid #000;
+            border-radius: 3px;
+            background-color: #fff;
+            font-size: 11px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .event-title {
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .event-time {
+            color: red;
+            font-size: 11px;
+        }
+
+        .more-events {
+            font-size: 11px;
+            color: #555;
+            margin-top: 2px;
+        }
+
+        /* Remove Gaps Between Days */
+        .calendar-grid > div {
+            border-right: 1px solid #000;
+            border-bottom: 1px solid #000;
+        }
+
+        /* Remove Borders Around Day Names */
+        .day-name {
+            border: none;
+        }
+
+        /* Today Panel Heading */
+        .today-panel h2 {
+            font-size: 21px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            font-family: Verdana, sans-serif;
+        }
+
+        .today-panel .event {
+            margin-bottom: 5px;
+            font-size: 15px;
+        }
+
+        .today-panel .event .event-time {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Upper section removed -->
+    <div class="lower-section">
+        <div class="calendar-container">
+            <div class="calendar-content">
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Weekdays and dates will be populated here -->
+                </div>
+                <div class="today-panel" id="todayPanel">
+                    <h2>Today</h2>
+                    <div id="todayEvents">
+                        <!-- Today's events will be listed here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const calendarGrid = document.getElementById('calendarGrid');
+        const todayPanel = document.getElementById('todayPanel');
+        const currentDateElement = document.getElementById('currentDate');
+
+        let currentDate = new Date();
+        let events = {};
+
+        function fetchICS(url) {
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.text();
+                })
+                .then(data => {
+                    let parsedEvents = parseICS(data);
+                    mapEvents(parsedEvents);
+                    renderCalendar();
+                    renderTodayPanel();
+                })
+                .catch(error => console.error('Error fetching ICS file:', error));
+        }
+
+        function parseICS(data) {
+            let eventsArray = [];
+            let lines = data.replace(/\r\n /g, '').split(/\r\n|\n/); // Unfold lines
+
+            let currentEvent = null;
+
+            for (let line of lines) {
+                if (line.startsWith('BEGIN:VEVENT')) {
+                    currentEvent = {};
+                } else if (line.startsWith('END:VEVENT')) {
+                    if (currentEvent) {
+                        eventsArray.push(currentEvent);
+                        currentEvent = null;
+                    }
+                } else if (currentEvent) {
+                    let [key, ...valueParts] = line.split(':');
+                    let value = valueParts.join(':');
+
+                    if (key.includes(';')) {
+                        key = key.split(';')[0];
+                    }
+
+                    currentEvent[key] = value;
+                }
+            }
+
+            return eventsArray;
+        }
+
+        function mapEvents(eventsArray) {
+            events = {}; // Reset events object
+
+            eventsArray.forEach(event => {
+                let dtstart = event['DTSTART'];
+                let dtend = event['DTEND'];
+                let summary = event['SUMMARY'];
+                let description = event['DESCRIPTION'];
+                let location = event['LOCATION'];
+
+                if (dtstart) {
+                    let eventDate = parseICSDatetime(dtstart);
+                    let dateKey = formatDateKey(eventDate);
+
+                    if (!events[dateKey]) {
+                        events[dateKey] = [];
+                    }
+
+                    events[dateKey].push({
+                        dtstart: eventDate,
+                        dtend: parseICSDatetime(dtend),
+                        summary: summary,
+                        description: description,
+                        location: location
+                    });
+                }
+            });
+        }
+
+        function parseICSDatetime(dt) {
+            let date;
+
+            if (dt.includes('T')) {
+                // DateTime format
+                let year = dt.substring(0, 4);
+                let month = dt.substring(4, 6);
+                let day = dt.substring(6, 8);
+                let hour = dt.substring(9, 11);
+                let minute = dt.substring(11, 13);
+                let second = dt.substring(13, 15);
+
+                date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+            } else {
+                // Date format
+                let year = dt.substring(0, 4);
+                let month = dt.substring(4, 6);
+                let day = dt.substring(6, 8);
+
+                date = new Date(year, month - 1, day);
+            }
+
+            return date;
+        }
+
+        function formatDateKey(date) {
+            let year = date.getFullYear();
+            let month = ('0' + (date.getMonth() + 1)).slice(-2);
+            let day = ('0' + date.getDate()).slice(-2);
+            return `${year}-${month}-${day}`;
+        }
+
+        function renderCalendar() {
+            calendarGrid.innerHTML = '';
+            const month = currentDate.getMonth();
+            const year = currentDate.getFullYear();
+
+            // Add weekday names
+            const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            weekdays.forEach((day, index) => {
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('day-name');
+                dayElement.textContent = day;
+                dayElement.style.gridRow = '1';
+                dayElement.style.gridColumn = index + 1;
+                calendarGrid.appendChild(dayElement);
+            });
+
+            // Calculate the number of days in the current month
+            const lastDate = new Date(year, month + 1, 0).getDate();
+            const firstDayIndex = new Date(year, month, 1).getDay();
+
+            // Get the total number of cells needed (including empty cells)
+            const totalCells = Math.ceil((firstDayIndex + lastDate) / 7) * 7;
+
+            // Initialize day counter
+            let dayCounter = 1;
+
+            // Fill in the calendar cells
+            for (let i = 0; i < totalCells; i++) {
+                const dayElement = document.createElement('div');
+
+                if (i >= firstDayIndex && dayCounter <= lastDate) {
+                    dayElement.classList.add('day');
+
+                    const dayNumber = document.createElement('div');
+                    dayNumber.classList.add('day-number');
+                    dayNumber.textContent = dayCounter;
+                    dayElement.appendChild(dayNumber);
+
+                    // Generate date key
+                    const monthString = ('0' + (month + 1)).slice(-2);
+                    const dayString = ('0' + dayCounter).slice(-2);
+                    const dateKey = `${year}-${monthString}-${dayString}`;
+
+                    // Highlight today's date
+                    const today = new Date();
+                    if (dayCounter === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                        dayElement.classList.add('today');
+                    }
+
+                    // Add events to the respective day
+                    if (events[dateKey]) {
+                        const maxEventsToShow = 2; // Maximum number of events to display
+                        const eventsForDay = events[dateKey];
+                        const eventsToShow = eventsForDay.slice(0, maxEventsToShow);
+
+                        eventsToShow.forEach(event => {
+                            const eventElement = document.createElement('div');
+                            eventElement.classList.add('event');
+
+                            const eventTitle = document.createElement('div');
+                            eventTitle.classList.add('event-title');
+                            eventTitle.textContent = event.summary || 'No Title';
+
+                            const eventTime = document.createElement('div');
+                            eventTime.classList.add('event-time');
+                            if (event.dtstart && event.dtend) {
+                                const options = { hour: '2-digit', minute: '2-digit', hour12: false };
+                                const startTime = event.dtstart.toLocaleTimeString([], options);
+                                const endTime = event.dtend.toLocaleTimeString([], options);
+                                eventTime.textContent = `${startTime} - ${endTime}`;
+                            } else {
+                                eventTime.textContent = 'All Day';
+                            }
+
+                            eventElement.appendChild(eventTitle);
+                            eventElement.appendChild(eventTime);
+
+                            dayElement.appendChild(eventElement);
+                        });
+
+                        const remainingEvents = eventsForDay.length - eventsToShow.length;
+                        if (remainingEvents > 0) {
+                            const moreEventsElement = document.createElement('div');
+                            moreEventsElement.classList.add('more-events');
+                            moreEventsElement.textContent = `... and ${remainingEvents} other event${remainingEvents > 1 ? 's' : ''}`;
+                            dayElement.appendChild(moreEventsElement);
+                        }
+                    }
+
+                    dayCounter++;
+                } else {
+                    dayElement.classList.add('empty-day');
+                }
+
+                calendarGrid.appendChild(dayElement);
+            }
+        }
+
+        function renderTodayPanel() {
+            const todayEventsContainer = document.getElementById('todayEvents');
+            todayEventsContainer.innerHTML = '';
+
+            const today = new Date();
+            const dateKey = formatDateKey(today);
+
+            if (events[dateKey]) {
+                events[dateKey].forEach(event => {
+                    const eventElement = document.createElement('div');
+                    eventElement.classList.add('event');
+
+                    const eventTitle = document.createElement('div');
+                    eventTitle.classList.add('event-title');
+                    eventTitle.textContent = event.summary || 'No Title';
+
+                    const eventTime = document.createElement('div');
+                    eventTime.classList.add('event-time');
+                    if (event.dtstart && event.dtend) {
+                        const options = { hour: '2-digit', minute: '2-digit', hour12: false };
+                        const startTime = event.dtstart.toLocaleTimeString([], options);
+                        const endTime = event.dtend.toLocaleTimeString([], options);
+                        eventTime.textContent = `${startTime} - ${endTime}`;
+                    } else {
+                        eventTime.textContent = 'All Day';
+                    }
+
+                    const eventDescription = document.createElement('div');
+                    eventDescription.classList.add('event-description');
+                    eventDescription.textContent = event.description || '';
+
+                    eventElement.appendChild(eventTitle);
+                    eventElement.appendChild(eventTime);
+                    eventElement.appendChild(eventDescription);
+
+                    todayEventsContainer.appendChild(eventElement);
+                });
+            } else {
+                todayEventsContainer.textContent = 'No events today.';
+            }
+        }
+
+        // Set current date in the upper section
+        function setCurrentDate() {
+            const options = { month: 'long', day: 'numeric', year: 'numeric' };
+            const formattedDate = currentDate.toLocaleDateString(undefined, options);
+            // Removed setting current date since upper section is removed
+        }
+
+        // Initially render the calendar and set current date
+        setCurrentDate();
+
+        // Fetch the ICS file and populate events
+        const icsUrl = 'https://calendar.google.com/calendar/ical/4e672ae2deed31eb051dfb3ba42476238f401da7222ce2fe556a25f6b26136ca%40group.calendar.google.com/private-a427d5099279177287985627fc469791/basic.ics';
+        const proxyUrl = 'https://api.allorigins.win/raw?cache=false&url=';
+        fetchICS(proxyUrl + encodeURIComponent(icsUrl));
+
+        // Render the calendar after fetching events
+        // Moved inside fetchICS to ensure events are rendered after fetching
+    </script>
+</body>
+</html>
