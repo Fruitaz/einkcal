@@ -1,5 +1,5 @@
 {
-  "name": "einkcal",
+  "name": "my-calendar-app",
   "version": "1.0.0",
   "scripts": {
     "dev": "next dev",
@@ -7,10 +7,11 @@
     "start": "next start"
   },
   "dependencies": {
-    "next": "^13.4.12",
-    "react": "latest",
-    "react-dom": "latest",
-    "puppeteer": "^21.1.0",
-    "basic-ftp": "^5.0.2"
+    "next": "^13.4.12",  // You can use the latest stable version
+    "react": "latest",    // Always ensure React is up-to-date
+    "react-dom": "latest",  // Include react-dom as well
+    "puppeteer": "^21.1.0",  // Your puppeteer version
+    "basic-ftp": "^5.0.2",   // FTP package for uploading screenshots
+    "eslint-config-next": "latest"  // Ensures Next.js linting is properly configured
   }
 }
