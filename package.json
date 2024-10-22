@@ -1,5 +1,5 @@
 {
-  "name": "my-calendar-app",
+  "name": "einkcal",
   "version": "1.0.0",
   "scripts": {
     "dev": "next dev",
