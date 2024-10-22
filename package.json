@@ -1,0 +1,14 @@
+{
+  "name": "my-calendar-app",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "latest",
+    "puppeteer": "^21.1.0",
+    "basic-ftp": "^5.0.2"
+  }
+}
