@@ -1,32 +1,40 @@
-// pages/api/upload.js
+import fetch from 'node-fetch';
 
-import nextConnect from 'next-connect';
-import multer from 'multer';
+export default async function handler(req, res) {
+  const { UPLOAD_URL, UPLOAD_USERNAME, UPLOAD_PASSWORD } = process.env;
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-});
+  try {
+    // Fetch the PNG image by invoking the render API route
+    const pngResponse = await fetch(`${req.headers.origin}/api/calendar_renderpng`, {
+      method: 'GET',
+    });
 
-const apiRoute = nextConnect({
-  onError(error, req, res) {
-    res.status(501).json({ error: `Sorry something Happened! ${error.message}` });
-  },
-  onNoMatch(req, res) {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
-  },
-});
+    if (!pngResponse.ok) {
+      throw new Error('Failed to render PNG image');
+    }
 
-apiRoute.use(upload.single('image'));
+    const pngBuffer = await pngResponse.buffer();
 
-apiRoute.post((req, res) => {
-  // Process the uploaded file here or forward it to upload.php
-  res.status(200).json({ data: 'File received' });
-});
+    // Prepare the form data
+    const formData = new FormData();
+    formData.append('file', pngBuffer, 'calendar.png');
 
-export default apiRoute;
+    // Upload the PNG to the SiteGround server
+    const uploadResponse = await fetch(UPLOAD_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`${UPLOAD_USERNAME}:${UPLOAD_PASSWORD}`).toString('base64'),
+      },
+      body: formData,
+    });
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+    if (!uploadResponse.ok) {
+      throw new Error('Failed to upload PNG image');
+    }
+
+    res.status(200).json({ message: 'Upload successful' });
+  } catch (error) {
+    console.error('Error uploading PNG image:', error);
+    res.status(500).json({ message: 'Error uploading PNG image' });
+  }
+}
