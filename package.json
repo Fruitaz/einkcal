@@ -1,5 +1,5 @@
 {
-  "name": "my-calendar-app",
+  "name": "einkcal",
   "version": "1.0.0",
   "scripts": {
     "dev": "next dev",
@@ -7,7 +7,9 @@
     "start": "next start"
   },
   "dependencies": {
-    "next": "latest",
+    "next": "^13.4.12",  // or the latest stable version
+    "react": "latest",
+    "react-dom": "latest",
     "puppeteer": "^21.1.0",
     "basic-ftp": "^5.0.2"
   }
