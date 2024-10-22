@@ -6,7 +6,8 @@
     "postinstall": "puppeteer install"
   },
   "dependencies": {
-    "puppeteer": "^21.0.0",
+    "puppeteer": "^23.3.0", // Latest stable version as of October 2024
+    "@sparticuz/chromium": "^114.0.0", // Optimized version of Chromium for serverless
     "ftp": "^0.3.10"
   }
 }
