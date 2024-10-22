@@ -1,0 +1,11 @@
+{
+  "name": "einkcal-screenshot-app",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node api/screenshot.js"
+  },
+  "dependencies": {
+    "puppeteer": "^21.0.0",
+    "ftp": "^0.3.10"
+  }
+}
