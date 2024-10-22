@@ -1,65 +1,39 @@
-// pages/calendar_renderpng.js
+import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer-core';
 
-import { useEffect } from 'react';
-import html2canvas from 'html2canvas';
-import fetch from 'node-fetch';
+export default async function handler(req, res) {
+  const { CALENDAR_USERNAME, CALENDAR_PASSWORD } = process.env;
+  const calendarUrl = 'https://secure.einkcal.com/calendar_screen1.html';
 
-const CalendarRenderPNG = () => {
-  useEffect(() => {
-    const renderAndUpload = async () => {
-      try {
-        // Fetch the protected HTML page
-        const response = await fetch('https://secure.einkcal.com/calendar_screen1.html', {
-          headers: {
-            'Authorization': 'Basic ' + Buffer.from(`${process.env.CALENDAR_USERNAME}:${process.env.CALENDAR_PASSWORD}`).toString('base64')
-          }
-        });
+  try {
+    const browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: { width: 980, height: 640 },
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+    });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch the calendar HTML page.');
-        }
+    const page = await browser.newPage();
 
-        const html = await response.text();
+    // Set basic HTTP authentication
+    await page.authenticate({
+      username: CALENDAR_USERNAME,
+      password: CALENDAR_PASSWORD,
+    });
 
-        // Create a DOM element to hold the HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const element = doc.body;
+    // Navigate to the calendar URL
+    await page.goto(calendarUrl, { waitUntil: 'networkidle2' });
 
-        // Render the HTML to PNG using html2canvas
-        const canvas = await html2canvas(element, { width: 960, height: 680 });
-        const pngDataUrl = canvas.toDataURL('image/png');
+    // Take a screenshot of the page
+    const pngBuffer = await page.screenshot({ type: 'png' });
 
-        // Convert Data URL to Blob
-        const blob = await fetch(pngDataUrl).then(res => res.blob());
+    await browser.close();
 
-        // Prepare form data
-        const formData = new FormData();
-        formData.append('image', blob, 'calendar.png');
-
-        // Upload the PNG to SiteGround via upload.php
-        const uploadResponse = await fetch(process.env.UPLOAD_URL, {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Basic ' + Buffer.from(`${process.env.UPLOAD_USERNAME}:${process.env.UPLOAD_PASSWORD}`).toString('base64')
-          },
-          body: formData
-        });
-
-        if (!uploadResponse.ok) {
-          throw new Error('Failed to upload PNG to SiteGround.');
-        }
-
-        console.log('PNG successfully uploaded to SiteGround.');
-      } catch (error) {
-        console.error('Error in renderAndUpload:', error);
-      }
-    };
-
-    renderAndUpload();
-  }, []);
-
-  return <div>Rendering Calendar...</div>;
-};
-
-export default CalendarRenderPNG;
+    // Send the PNG buffer as the response
+    res.setHeader('Content-Type', 'image/png');
+    res.status(200).send(pngBuffer);
+  } catch (error) {
+    console.error('Error rendering calendar:', error);
+    res.status(500).json({ message: 'Error rendering calendar' });
+  }
+}
