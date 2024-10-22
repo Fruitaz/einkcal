@@ -2,12 +2,10 @@
   "name": "einkcal-screenshot-app",
   "version": "1.0.0",
   "scripts": {
-    "start": "node api/screenshot.js",
-    "postinstall": "puppeteer install"
+    "start": "node api/screenshot.js"
   },
   "dependencies": {
-    "@sparticuz/chromium": "^114.0.0",
-    "puppeteer-core": "^23.3.0",
+    "playwright": "^1.39.0",
     "ftp": "^0.3.10"
   }
 }
