@@ -1,17 +1,14 @@
 {
   "name": "einkcal",
   "version": "1.0.0",
-  "description": "Calendar rendering for e-Paper display",
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
+  "main": "index.js",
+  "license": "MIT",
   "dependencies": {
-    "html2canvas": "^1.4.1",
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "node-fetch": "^3.3.0"
+    "@sparticuz/chromium": "^126.0.0",  // Matches with Chromium 126 (Serverless compatible)
+    "puppeteer-core": "^23.6.0",  // Latest version
+    "axios": "^1.5.0",  // Latest stable version
+    "next": "^13.5.2",  // Updated Next.js version for better performance and features
+    "react": "^18.2.0",  // React 18 for the latest features
+    "react-dom": "^18.2.0"  // React DOM corresponding to React 18
   }
 }
