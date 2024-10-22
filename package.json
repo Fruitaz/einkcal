@@ -1,11 +1,23 @@
 {
   "name": "einkcal",
   "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "jest"
+  },
   "dependencies": {
     "next": "^13.4.12",
-    "react": "latest",
-    "react-dom": "latest",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "puppeteer": "^21.1.0",
     "basic-ftp": "^5.0.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.36.0",
+    "eslint-config-next": "latest",
+    "jest": "^29.0.0"
   }
 }
