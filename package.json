@@ -2,11 +2,10 @@
   "name": "einkcal-screenshot-app",
   "version": "1.0.0",
   "scripts": {
-    "start": "node api/screenshot.js",
-    "postinstall": "npx playwright install"  
+    "start": "node api/screenshot.js"
   },
   "dependencies": {
-    "playwright": "^1.39.0",  
-    "ftp": "^0.3.10"        
+    "playwright-aws-lambda": "^1.22.0",  
+    "ftp": "^0.3.10"                    
   }
 }
