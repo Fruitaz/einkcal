@@ -1,39 +1,32 @@
-export default async function handler(req, res) {
-  if (req.method === 'POST') {
-    const { image } = req.body;
+// pages/api/upload.js
 
-    if (!image) {
-      return res.status(400).json({ error: 'No image data provided' });
-    }
+import nextConnect from 'next-connect';
+import multer from 'multer';
 
-    try {
-      // Get credentials from environment variables
-      const username = process.env.NEXT_PUBLIC_SITEGROUND_USERNAME;
-      const password = process.env.NEXT_PUBLIC_SITEGROUND_PASSWORD;
+const upload = multer({
+  storage: multer.memoryStorage(),
+});
 
-      // Encode credentials for Basic Auth
-      const credentials = Buffer.from(`${username}:${password}`).toString('base64');
+const apiRoute = nextConnect({
+  onError(error, req, res) {
+    res.status(501).json({ error: `Sorry something Happened! ${error.message}` });
+  },
+  onNoMatch(req, res) {
+    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
+  },
+});
 
-      // Forward the image to SiteGround PHP script for saving as BMP
-      const response = await fetch('https://secure.einkcal.com/upload.php', {
-        method: 'POST',
-        body: JSON.stringify({ image }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${credentials}`,  // Add Basic Auth header
-        },
-      });
+apiRoute.use(upload.single('image'));
 
-      if (response.ok) {
-        return res.status(200).json({ success: true, message: 'Image uploaded successfully' });
-      } else {
-        return res.status(500).json({ success: false, message: 'Failed to upload image to SiteGround' });
-      }
-    } catch (error) {
-      return res.status(500).json({ error: 'Error uploading image to SiteGround' });
-    }
-  } else {
-    res.setHeader('Allow', ['POST']);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
-  }
-}
+apiRoute.post((req, res) => {
+  // Process the uploaded file here or forward it to upload.php
+  res.status(200).json({ data: 'File received' });
+});
+
+export default apiRoute;
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
