@@ -1,22 +1,20 @@
 {
-  "name": "einkcal-project",
+  "name": "einkscreen",
   "version": "1.0.0",
-  "private": true,
+  "description": "An API that captures website screenshots using Puppeteer and Hono.js",
+  "main": "index.js",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "start": "node index.js",
+    "dev": "vercel dev"
   },
   "dependencies": {
-    "next": "^14.2.0",  
-    "react": "^18.3.0",
-    "react-dom": "^18.3.0",
-    "node-html-to-image": "^3.2.0",
-    "axios": "^1.6.1"
+    "hono": "^4.6.6",
+    "puppeteer": "^23.6.0",
+    "dotenv": "^16.3.1"
   },
-  "devDependencies": {
-    "@types/node": "^20.4.0",
-    "@types/react": "^18.2.0",
-    "typescript": "^5.1.0"
-  }
+  "engines": {
+    "node": ">=18.x"
+  },
+  "author": "Your Name",
+  "license": "MIT"
 }
