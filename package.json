@@ -10,7 +10,7 @@
   "dependencies": {
     "hono": "^4.6.6",
     "puppeteer": "^23.6.0",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
     "formidable": "^3.5.0"
   },
   "engines": {
