@@ -1,12 +1,9 @@
 import { Hono } from 'hono';
 import puppeteer from 'puppeteer';
 import { IncomingForm } from 'formidable';
-import fs from 'fs';
-import { join } from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import dotenv from 'dotenv';
 
+// Load environment variables
 dotenv.config();
 
 const app = new Hono();
@@ -46,6 +43,8 @@ app.post('/screenshot', async (ctx) => {
   }
 });
 
+// Default route
 app.get('/', (ctx) => ctx.json({ message: 'Screenshot API is running' }));
 
+// Ensure app is exported as the default export
 export default app;
